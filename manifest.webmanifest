@@ -1,0 +1,10 @@
+{
+  "name":"まゆぴの家計簿",
+  "short_name":"まゆぴ家計簿",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f6f7f5",
+  "theme_color":"#1f6b45",
+  "lang":"ja",
+  "icons":[]
+}
