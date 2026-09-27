@@ -3,217 +3,179 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1f3a2d"><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f6b45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
 <title>💰 まゆぴの家計簿</title>
 <style>
-:root{--bg:#f6f7f5;--card:#fff;--text:#202522;--muted:#778078;--green:#1f6b45;--green2:#dceee4;--line:#e6e9e6;--danger:#c94a4a}
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+:root{--bg:#f6f7f5;--card:#fff;--text:#202522;--muted:#778078;--green:#1f6b45;--green2:#dceee4;--line:#e6e9e6;--danger:#c94a4a;--dangerbg:#fff0f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
 main{max-width:680px;margin:auto;padding:18px 16px 90px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 h1{font-size:25px;margin:0}.month{color:var(--muted);font-size:14px;margin-top:4px}
-button{border:0;border-radius:14px;padding:11px 14px;font-weight:700;font-size:15px}
-.primary{background:var(--green);color:white}.secondary{background:#eef1ee;color:var(--text)}
-.hero{background:var(--green);color:#fff;border-radius:24px;padding:22px;margin:14px 0 12px;box-shadow:0 8px 24px #1f3a2d22}
-.hero small{opacity:.8}.hero .amount{font-size:42px;font-weight:800;letter-spacing:-1px;margin:4px 0 8px}
+button{border:0;border-radius:14px;padding:11px 14px;font-weight:700;font-size:15px}.primary{background:var(--green);color:white}.secondary{background:#eef1ee;color:var(--text)}
+.hero{background:var(--green);color:#fff;border-radius:24px;padding:22px;margin:14px 0 12px;box-shadow:0 8px 24px #1f3a2d22}.hero small{opacity:.8}.hero .amount{font-size:42px;font-weight:800;letter-spacing:-1px;margin:4px 0 8px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 10px}.stat b{display:block;font-size:17px;margin-top:4px}.stat small{color:var(--muted)}
-.add{width:100%;margin:12px 0 18px;font-size:17px;padding:15px}
-section{margin:20px 0} h2{font-size:19px;margin:0 0 10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
-.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.muted{color:var(--muted)} .right{text-align:right}
-.progress{height:8px;background:#edf0ed;border-radius:99px;overflow:hidden;margin-top:9px}.bar{height:100%;background:var(--green);border-radius:99px}
-.expense{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.expense:last-child{border-bottom:0}
-.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef1ee;font-size:12px;margin-top:4px}
+.add{width:100%;margin:12px 0 8px;font-size:17px;padding:15px}.commute{width:100%;margin:0 0 18px;font-size:16px;padding:13px;background:#edf5f0;color:var(--green)}
+section{margin:20px 0}h2{font-size:19px;margin:0 0 10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.muted{color:var(--muted)}.right{text-align:right}
+.progress{height:8px;background:#edf0ed;border-radius:99px;overflow:hidden;margin-top:9px}.bar{height:100%;background:var(--green);border-radius:99px}.over-budget{border-color:#efb2b2;background:var(--dangerbg)}.over-budget .bar{background:var(--danger)}.over-budget .budget-main{color:var(--danger)}
+.expense{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.expense:last-child{border-bottom:0}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef1ee;font-size:12px;margin-top:4px}
+.payment-date{font-size:14px;font-weight:800;color:var(--green)}.payment-total{font-size:21px;font-weight:800}.payment-detail{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}.payment-item{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:14px}.payment-note{font-size:12px;color:var(--muted)}
 .modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:10}.modal.open{display:flex}.sheet{background:var(--bg);width:100%;max-width:680px;border-radius:24px 24px 0 0;padding:18px 16px 28px;max-height:92vh;overflow:auto}
-label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,select{width:100%;padding:13px;border:1px solid #d9ded9;border-radius:12px;background:white;font-size:16px}
-.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;margin-top:18px}.actions button{flex:1}
-.danger{color:var(--danger);background:#fff0f0}.empty{padding:16px;text-align:center;color:var(--muted)}
-details summary{cursor:pointer;font-weight:700}.fixedrow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,select{width:100%;padding:13px;border:1px solid #d9ded9;border-radius:12px;background:white;font-size:16px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;margin-top:18px}.actions button{flex:1}.danger{color:var(--danger);background:#fff0f0}.empty{padding:16px;text-align:center;color:var(--muted)}details summary{cursor:pointer;font-weight:700}.fixedrow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
 @media(max-width:420px){.hero .amount{font-size:36px}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
 <main>
-  <div class="top">
-    <div><h1>💰 今月の家計</h1><div class="month" id="monthLabel"></div></div>
-    <button class="secondary" onclick="openSettings()">⚙️</button>
-  </div>
-
-  <div class="hero">
-    <small>🟢 今月あと使える</small>
-    <div class="amount" id="remaining">¥0</div>
-    <small id="heroNote"></small>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><small>💸 今月使った</small><b id="spent">¥0</b></div>
-    <div class="stat"><small>🐖 今月貯金</small><b id="saved">¥0</b></div>
-    <div class="stat"><small>🏠 固定支出</small><b id="fixed">¥0</b></div>
-  </div>
-
+  <div class="top"><div><h1>💰 今月の家計</h1><div class="month" id="monthLabel"></div></div><button class="secondary" onclick="openSettings()">⚙️</button></div>
+  <div class="hero"><small>🟢 今月あと使える</small><div class="amount" id="remaining">¥0</div><small id="heroNote"></small></div>
+  <div class="stats"><div class="stat"><small>💸 今月使った</small><b id="spent">¥0</b></div><div class="stat"><small>🐖 今月貯金</small><b id="saved">¥0</b></div><div class="stat"><small>🏠 固定支出</small><b id="fixed">¥0</b></div></div>
   <button class="primary add" onclick="openExpense()">＋ 💸 支出を登録</button>
+  <button class="commute" onclick="registerCommute()">🚃 通勤　往復 ¥586 を今日の日付で登録</button>
 
-  <section>
-    <h2>📊 あと使える金額</h2>
-    <div id="categories"></div>
-  </section>
-
-  <section>
-    <h2>⚡ 水道光熱費</h2>
-    <div id="utilities"></div>
-  </section>
-
-  <section>
-    <h2>💳 カード支払い予定</h2>
-    <div id="cards"></div>
-  </section>
-
-  <section>
-    <h2>🐖 貯金</h2>
-    <div class="card">
-      <div class="row"><span>今月の目標</span><b>¥50,000</b></div>
-      <div class="progress"><div class="bar" id="savingBar"></div></div>
-      <div class="row" style="margin-top:8px"><span class="muted">実績</span><b id="savingText">¥0 / ¥50,000</b></div>
-    </div>
-  </section>
-
-  <section>
-    <h2>🧾 最近の支出</h2>
-    <div class="card" id="recent"></div>
-  </section>
+  <section><h2>📊 あと使える金額</h2><div id="categories"></div></section>
+  <section><h2>⚡ 水道光熱費</h2><div id="utilities"></div></section>
+  <section><h2>💳 支払い予定</h2><div class="muted" style="margin:-3px 0 10px">カード・口座引落を支払日ごとにまとめています。タップすると内訳が見られます。</div><div id="payments"></div></section>
+  <section><h2>🐖 貯金</h2><div class="card"><div class="row"><span>今月の目標</span><b>¥50,000</b></div><div class="progress"><div class="bar" id="savingBar"></div></div><div class="row" style="margin-top:8px"><span class="muted">実績</span><b id="savingText">¥0 / ¥50,000</b></div></div></section>
+  <section><h2>🧾 最近の支出</h2><div class="card" id="recent"></div></section>
 </main>
 
-<div class="modal" id="expenseModal">
-  <div class="sheet">
-    <div class="row"><h2>💸 支出を登録</h2><button class="secondary" onclick="closeExpense()">閉じる</button></div>
-    <div class="formgrid">
-      <div><label>金額</label><input id="amount" type="number" inputmode="decimal" placeholder="780"></div>
-      <div><label>利用日</label><input id="date" type="date"></div>
-    </div>
-    <label>カテゴリ</label><select id="category"></select>
-    <label>支払方法</label><select id="method"></select>
-    <label>備考（任意）</label><input id="note" placeholder="コンビニなど">
-    <div class="actions"><button class="secondary" onclick="closeExpense()">キャンセル</button><button class="primary" onclick="saveExpense()">登録する</button></div>
-  </div>
-</div>
+<div class="modal" id="expenseModal"><div class="sheet"><div class="row"><h2>💸 支出を登録</h2><button class="secondary" onclick="closeExpense()">閉じる</button></div>
+  <div class="formgrid"><div><label>金額</label><input id="amount" type="number" inputmode="numeric" value="0" min="0"></div><div><label>利用日</label><input id="date" type="date"></div></div>
+  <label>カテゴリ</label><select id="category"></select><label>支払方法</label><select id="method"></select><label>備考（任意）</label><input id="note" placeholder="コンビニなど">
+  <div class="actions"><button class="secondary" onclick="closeExpense()">キャンセル</button><button class="primary" onclick="saveExpense()">登録する</button></div>
+</div></div>
 
-<div class="modal" id="settingsModal">
-  <div class="sheet">
-    <div class="row"><h2>⚙️ 設定</h2><button class="secondary" onclick="closeSettings()">閉じる</button></div>
-    <div class="card">
-      <div class="row"><span>手取り</span><b>¥277,307</b></div>
-      <div class="row"><span>先取り貯金目標</span><b>¥50,000</b></div>
-      <div class="row"><span>固定支出</span><b>¥138,662</b></div>
-      <div class="row"><span>水道光熱費予算</span><b>¥16,000</b></div>
-    </div>
-    <details class="card"><summary>固定支出の内訳</summary><div id="fixedList"></div></details>
-    <details class="card" open><summary>💳 カード設定</summary><div id="cardList"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openCardEditor()">＋ カードを追加</button></details>
-    <details class="card"><summary>⚡ 水道光熱費の実績</summary><div id="utilitySettings"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openUtilityEditor()">＋ 実績を入力</button></details>
-    <div class="card"><b>🐖 先取り貯金</b><div class="actions"><button class="secondary" onclick="openSavingEditor()">今月の貯金額を入力</button></div></div>
-    <div class="card"><b>💾 データ</b><p class="muted">支出はこの端末のブラウザ内に保存されます。機種変更・ブラウザ削除前にバックアップしてください。</p><div class="actions"><button class="secondary" onclick="exportData()">バックアップ</button><button class="danger" onclick="clearData()">全データ削除</button></div></div>
-  </div>
-</div>
+<div class="modal" id="settingsModal"><div class="sheet"><div class="row"><h2>⚙️ 設定</h2><button class="secondary" onclick="closeSettings()">閉じる</button></div>
+  <div class="card"><div class="row"><span>手取り</span><b>¥277,307</b></div><div class="row"><span>先取り貯金目標</span><b>¥50,000</b></div><div class="row"><span>固定支出</span><b>¥138,662</b></div><div class="row"><span>水道光熱費予算</span><b>¥16,000</b></div></div>
+  <details class="card"><summary>固定支出の内訳</summary><div id="fixedList"></div></details>
+  <details class="card" open><summary>💳 カード設定</summary><div id="cardList"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openCardEditor()">＋ カードを追加</button></details>
+  <details class="card"><summary>⚡ 水道光熱費の実績</summary><div id="utilitySettings"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openUtilityEditor()">＋ 実績を入力</button></details>
+  <div class="card"><b>🐖 先取り貯金</b><div class="actions"><button class="secondary" onclick="openSavingEditor()">今月の貯金額を入力</button></div></div>
+  <div class="card"><b>💾 データ</b><p class="muted">支出はこの端末のブラウザ内に保存されます。機種変更・ブラウザ削除前にバックアップしてください。</p><div class="actions"><button class="secondary" onclick="exportData()">バックアップ</button><button class="danger" onclick="clearData()">全データ削除</button></div></div>
+</div></div>
 
 <script>
-const CATS=[
- ["🍚 食費",30000],["🧻 日用品",7000],["💄 美容",5000],["🎮 娯楽・趣味",8000],
- ["🏥 医療費",2000],["🏍️ バイク関連費",7000],["🚃 交通費",3000],["👗 衣服",3000],["🎁 交際費",3000]
-];
+const CATS=[["🍚 食費",30000],["🧻 日用品",7000],["💄 美容",5000],["🎮 娯楽・趣味",8000],["🏥 医療費",2000],["🏍️ バイク関連費",7000],["🚃 交通費",3000],["👗 衣服",3000],["🎁 交際費",3000]];
 const METHODS=["現金","みずほ銀行","ゆうちょ銀行","SAISONカード","SAISONカード プレミアム","au PAYカード","エポスカード"];
 const FIXED=[
- ["家賃","¥74,930","みずほ銀行・毎月27日"],["携帯","¥10,000","au PAYカード"],["インターネット","¥4,300","SAISONカード プレミアム"],
- ["バイクローン","¥11,000","ゆうちょ銀行"],["バイク保険","¥4,000","ゆうちょ銀行"],["バイク置き場","¥2,730","みずほ銀行・毎月27日"],
- ["奨学金","¥11,062","ゆうちょ銀行"],["下着","¥15,000","ゆうちょ銀行"],["ウォーターサーバー","¥3,140","SAISONカード プレミアム"],["Apple Music","¥2,500","SAISONカード プレミアム"]
+ ["家賃",74930,"みずほ銀行",27], ["携帯",10000,"au PAYカード",null], ["インターネット",4300,"SAISONカード プレミアム",null],
+ ["バイクローン",11000,"ゆうちょ銀行",null], ["バイク保険",4000,"ゆうちょ銀行",null], ["バイク置き場",2730,"みずほ銀行",27],
+ ["奨学金",11062,"ゆうちょ銀行",null], ["下着",15000,"ゆうちょ銀行",null], ["ウォーターサーバー",3140,"SAISONカード プレミアム",null], ["Apple Music",2500,"SAISONカード プレミアム",null]
 ];
 const UTIL={電気:8000,ガス:5000,水道:3000};
-const DEFAULT_CARDS={
- "SAISONカード":{close:10,pay:4},"SAISONカード プレミアム":{close:10,pay:4},"au PAYカード":{close:15,pay:10},"エポスカード":{close:27,pay:27}
-};
+const DEFAULT_CARDS={"SAISONカード":{close:10,pay:4},"SAISONカード プレミアム":{close:10,pay:4},"au PAYカード":{close:15,pay:10},"エポスカード":{close:27,pay:27}};
 let cards=JSON.parse(localStorage.getItem("mayupi_cards")||"null")||DEFAULT_CARDS;
 let utilities=JSON.parse(localStorage.getItem("mayupi_utilities")||"{}");
 let expenses=JSON.parse(localStorage.getItem("mayupi_expenses")||"[]");
 let savings=JSON.parse(localStorage.getItem("mayupi_savings")||"{}");
 
 function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP")}
-function ym(d=new Date()){return d.toISOString().slice(0,7)}
+function localISO(d=new Date()){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
+function ym(d=new Date()){return localISO(d).slice(0,7)}
 function fmtDate(s){const d=new Date(s+"T00:00:00");return `${d.getMonth()+1}/${d.getDate()}`}
 function monthExpenses(m){return expenses.filter(x=>x.date.slice(0,7)===m)}
 function openExpense(){
  document.getElementById("expenseModal").classList.add("open");
- document.getElementById("date").value=new Date().toISOString().slice(0,10);
- document.getElementById("amount").focus();
+ document.getElementById("date").value=localISO();
+ document.getElementById("amount").value=0;
+ document.getElementById("method").value="SAISONカード プレミアム";
+ document.getElementById("category").value=CATS[0][0];
+ document.getElementById("note").value="";
+ document.getElementById("amount").focus();document.getElementById("amount").select();
 }
 function closeExpense(){document.getElementById("expenseModal").classList.remove("open")}
 function saveExpense(){
- const amount=Number(document.getElementById("amount").value), date=document.getElementById("date").value;
- if(!amount||!date){alert("金額と利用日を入力してね🥹");return}
+ const amount=Number(document.getElementById("amount").value),date=document.getElementById("date").value;
+ if(!amount||amount<0||!date){alert("金額と利用日を入力してね🥹");return}
  expenses.push({id:Date.now(),amount,date,category:document.getElementById("category").value,method:document.getElementById("method").value,note:document.getElementById("note").value});
- localStorage.setItem("mayupi_expenses",JSON.stringify(expenses)); closeExpense(); render();
+ localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));closeExpense();render();
+}
+function registerCommute(){
+ const date=localISO();
+ expenses.push({id:Date.now(),amount:586,date,category:"🚃 交通費",method:"SAISONカード プレミアム",note:"通勤（和光市→永田町 往復）"});
+ localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));render();
 }
 function deleteExpense(id){expenses=expenses.filter(x=>x.id!==id);localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));render()}
 function render(){
- const now=new Date(), m=ym(now), ex=monthExpenses(m);
+ const now=new Date(),m=ym(now),ex=monthExpenses(m);
  document.getElementById("monthLabel").textContent=`${now.getFullYear()}年${now.getMonth()+1}月`;
  document.getElementById("category").innerHTML=CATS.map(c=>`<option>${c[0]}</option>`).join("");
  document.getElementById("method").innerHTML=METHODS.map(x=>`<option>${x}</option>`).join("");
- const spent=ex.reduce((a,x)=>a+x.amount,0), save=savings[m]||0, fixed=138662, utilBudget=16000;
+ document.getElementById("method").value="SAISONカード プレミアム";
+ const spent=ex.reduce((a,x)=>a+x.amount,0),save=savings[m]||0,fixed=138662,utilBudget=16000;
  const remaining=277307-50000-fixed-utilBudget-spent;
- document.getElementById("remaining").textContent=yen(remaining);
- document.getElementById("spent").textContent=yen(spent);
- document.getElementById("saved").textContent=yen(save);
- document.getElementById("fixed").textContent=yen(fixed);
+ document.getElementById("remaining").textContent=yen(remaining);document.getElementById("spent").textContent=yen(spent);document.getElementById("saved").textContent=yen(save);document.getElementById("fixed").textContent=yen(fixed);
  document.getElementById("heroNote").textContent=`手取り ¥277,307 − 貯金 ¥50,000 − 固定支出 ¥138,662 − 水道光熱費予算 ¥16,000 − 今月の支出`;
  document.getElementById("categories").innerHTML=CATS.map(([name,budget])=>{
-   const used=ex.filter(x=>x.category===name).reduce((a,x)=>a+x.amount,0), left=budget-used, pct=Math.min(100,Math.max(0,used/budget*100));
-   return `<div class="card"><div class="row"><b>${name}</b><b>${left<0?"予算超過 "+yen(-left):"あと "+yen(left)}</b></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="row muted" style="margin-top:7px"><span>予算 ${yen(budget)}</span><span>使用 ${yen(used)}</span></div></div>`;
+   const used=ex.filter(x=>x.category===name).reduce((a,x)=>a+x.amount,0),left=budget-used,pct=Math.min(100,Math.max(0,used/budget*100)),over=left<0;
+   return `<div class="card ${over?'over-budget':''}"><div class="row"><b>${name}</b><b class="budget-main">${over?"予算超過 "+yen(-left):"あと "+yen(left)}</b></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="row muted" style="margin-top:7px"><span>予算 ${yen(budget)}</span><span>使用 ${yen(used)}</span></div></div>`;
  }).join("");
  document.getElementById("utilities").innerHTML=Object.entries(UTIL).map(([k,b])=>{const actual=utilities[m]?.[k];return `<div class="card"><div class="row"><span>${k}</span><b>${actual!=null?yen(actual):yen(b)}</b></div><div class="muted">予算 ${yen(b)}${actual!=null?` ・ 実績 ${yen(actual)}`:" ・ 未入力"}</div></div>`}).join("");
- renderCards(m);
+ renderPayments();
  const recent=expenses.slice().sort((a,b)=>b.id-a.id).slice(0,10);
  document.getElementById("recent").innerHTML=recent.length?recent.map(x=>`<div class="expense"><div><b>${x.category}</b><div class="muted">${fmtDate(x.date)}・${x.method}${x.note?"・"+x.note:""}</div></div><div class="right"><b>${yen(x.amount)}</b><br><button class="secondary" style="padding:5px 8px;font-size:12px" onclick="deleteExpense(${x.id})">削除</button></div></div>`).join(""):"<div class='empty'>まだ支出はありません🌱</div>";
- document.getElementById("savingText").textContent=`${yen(save)} / ¥50,000`;
- document.getElementById("savingBar").style.width=Math.min(100,save/50000*100)+"%";
- document.getElementById("fixedList").innerHTML=FIXED.map(x=>`<div class="fixedrow"><span>${x[0]}<br><small class="muted">${x[2]}</small></span><b>${x[1]}</b></div>`).join("");
+ document.getElementById("savingText").textContent=`${yen(save)} / ¥50,000`;document.getElementById("savingBar").style.width=Math.min(100,save/50000*100)+"%";
+ document.getElementById("fixedList").innerHTML=FIXED.map(x=>`<div class="fixedrow"><span>${x[0]}<br><small class="muted">${x[2]}${x[3]?`・毎月${x[3]}日`:"・支払日未設定"}</small></span><b>${yen(x[1])}</b></div>`).join("");
  document.getElementById("cardList").innerHTML=Object.entries(cards).map(([name,info])=>`<div class="fixedrow"><span>💳 ${name}<br><small class="muted">${info.close}日締め・翌月${info.pay}日払い</small></span><button class="secondary" style="padding:6px 9px;font-size:12px" onclick="editCard('${encodeURIComponent(name)}')">編集</button></div>`).join("");
-document.getElementById("utilitySettings").innerHTML=Object.entries(utilities[m]||{}).map(([k,v])=>`<div class="fixedrow"><span>${k}</span><b>${yen(v)}</b></div>`).join("")||'<div class="muted">今月の実績はまだありません</div>';
+ document.getElementById("utilitySettings").innerHTML=Object.entries(utilities[m]||{}).map(([k,v])=>`<div class="fixedrow"><span>${k}</span><b>${yen(v)}</b></div>`).join("")||'<div class="muted">今月の実績はまだありません</div>';
 }
-function renderCards(m){
- const today=new Date();
- let rows=[];
- for(const e of expenses){
-   if(!cards[e.method]) continue;
-   const d=new Date(e.date+"T00:00:00"), y=d.getFullYear(), mo=d.getMonth(), day=d.getDate(), info=cards[e.method];
-   let py,pm;
-   if(day<=info.close){pm=mo+1;py=y}else{pm=mo+2;py=y}
-   if(pm>12){pm-=12;py++}
-   const due=new Date(py,pm-1,info.pay); rows.push({due,e});
+function nextPaymentDateFromExpense(e){
+ if(!cards[e.method]) return null;
+ const d=new Date(e.date+"T00:00:00"),info=cards[e.method];
+ let py=d.getFullYear(),pm=d.getMonth();
+ if(d.getDate()<=info.close){pm+=1}else{pm+=2}
+ const due=new Date(py,pm,info.pay);
+ return due;
+}
+function dateKey(d){return localISO(d)}
+function nextFixedDate(day,from=new Date()){
+ if(!day)return null;let d=new Date(from.getFullYear(),from.getMonth(),day);if(d<new Date(from.getFullYear(),from.getMonth(),from.getDate()))d=new Date(from.getFullYear(),from.getMonth()+1,day);return d;
+}
+function renderPayments(){
+ const today=new Date();today.setHours(0,0,0,0);
+ const groups={};
+ function add(date,name,amount,method,type=""){
+   if(!date)return;const key=dateKey(date);if(!groups[key])groups[key]={date,items:[]};groups[key].items.push({name,amount,method,type});
  }
- rows.sort((a,b)=>a.due-b.due);
- const upcoming=rows.filter(r=>r.due>=new Date(today.getFullYear(),today.getMonth(),1)).slice(0,8);
- const fixedCard=FIXED.filter(x=>x[2].includes("カード"));
- document.getElementById("cards").innerHTML=upcoming.length?upcoming.map(r=>`<div class="card"><div class="row"><span>${fmtDate(r.due.toISOString().slice(0,10))}・${r.e.method}</span><b>${yen(r.e.amount)}</b></div><div class="muted">利用 ${fmtDate(r.e.date)}・${r.e.category}</div></div>`).join(""):`<div class="card empty">これからのカード利用がここに表示されます💳</div>`;
+ // 固定支出：支払日が分かっているものを予定に表示。未設定のものは別枠で表示。
+ FIXED.forEach(([name,amount,method,day])=>{if(day)add(nextFixedDate(day,today),name,amount,method,"固定支出")});
+ // カード利用：締め日・支払日に基づいて合算
+ expenses.forEach(e=>{const due=nextPaymentDateFromExpense(e);if(due && due>=today)add(due,e.method,e.amount,e.method,"カード利用");});
+ // カード固定費も、支払日が分かるカードについて予定に加える。ただし同じ月のカード利用とは別明細として統合。
+ FIXED.forEach(([name,amount,method])=>{if(cards[method]){
+   const info=cards[method],d=new Date(today.getFullYear(),today.getMonth(),1);
+   // 今月以降の最初の支払日（カード固定費は「翌月支払い」なので、直近のカード支払日として扱う）
+   let due=new Date(d.getFullYear(),d.getMonth(),info.pay); if(due<today)due=new Date(d.getFullYear(),d.getMonth()+1,info.pay);
+   add(due,name,amount,method,"カード固定費");
+ }});
+ const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b)).slice(0,8);
+ let html=keys.map(key=>{const g=groups[key],total=g.items.reduce((s,x)=>s+x.amount,0);return `<details class="card"><summary><div class="row"><span><span class="payment-date">${fmtDate(key)}</span><br><span class="muted">${[...new Set(g.items.map(x=>x.method))].join("・")}</span></span><span class="payment-total">${yen(total)}</span></div></summary><div class="payment-detail">${g.items.map(x=>`<div class="payment-item"><span>${x.name}<br><span class="payment-note">${x.type}・${x.method}</span></span><b>${yen(x.amount)}</b></div>`).join("")}</div></details>`}).join("");
+ const unknown=FIXED.filter(x=>!x[3]&&!cards[x[2]]);
+ if(unknown.length){const total=unknown.reduce((s,x)=>s+x[1],0);html+=`<details class="card"><summary><div class="row"><span><span class="payment-date">支払日未設定</span><br><span class="muted">ゆうちょ銀行など</span></span><span class="payment-total">${yen(total)}</span></div></summary><div class="payment-detail">${unknown.map(x=>`<div class="payment-item"><span>${x[0]}<br><span class="payment-note">${x[2]}・設定から支払日を確認できます</span></span><b>${yen(x[1])}</b></div>`).join("")}</div></details>`}
+ document.getElementById("payments").innerHTML=html||'<div class="card empty">これからの支払い予定はありません🌱</div>';
 }
-function openCardEditor(name=""){document.getElementById("cardModal").classList.add("open");document.getElementById("cardName").value=name;document.getElementById("cardClose").value=name&&cards[name]?cards[name].close:"";document.getElementById("cardPay").value=name&&cards[name]?cards[name].pay:"";document.getElementById("cardName").dataset.original=name;}
-function closeCardEditor(){document.getElementById("cardModal").classList.remove("open");}
-function saveCard(){const name=document.getElementById("cardName").value.trim(), close=Number(document.getElementById("cardClose").value), pay=Number(document.getElementById("cardPay").value), original=document.getElementById("cardName").dataset.original;if(!name||!close||!pay||close<1||close>31||pay<1||pay>31){alert("カード名・締め日・支払日を入力してね🥹");return}if(original&&original!==name){cards[name]=cards[original];delete cards[original]}cards[name]={close,pay};localStorage.setItem("mayupi_cards",JSON.stringify(cards));closeCardEditor();render();}
-function editCard(encoded){openCardEditor(decodeURIComponent(encoded));}
-function openUtilityEditor(){document.getElementById("utilityModal").classList.add("open");document.getElementById("utilityMonth").value=ym();document.getElementById("utilityAmount").value="";}
-function closeUtilityEditor(){document.getElementById("utilityModal").classList.remove("open");}
-function saveUtility(){const m=document.getElementById("utilityMonth").value,t=document.getElementById("utilityType").value,a=Number(document.getElementById("utilityAmount").value);if(!m||!a){alert("対象月と金額を入力してね🥹");return}utilities[m]=utilities[m]||{};utilities[m][t]=a;localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));closeUtilityEditor();render();}
-function openSavingEditor(){document.getElementById("savingModal").classList.add("open");document.getElementById("savingMonth").value=ym();document.getElementById("savingAmount").value=savings[ym()]||50000;}
-function closeSavingEditor(){document.getElementById("savingModal").classList.remove("open");}
-function saveSaving(){const m=document.getElementById("savingMonth").value,a=Number(document.getElementById("savingAmount").value);if(!m||a<0){alert("対象月と金額を入力してね🥹");return}savings[m]=a;localStorage.setItem("mayupi_savings",JSON.stringify(savings));closeSavingEditor();render();}
+function openCardEditor(name=""){document.getElementById("cardModal").classList.add("open");document.getElementById("cardName").value=name;document.getElementById("cardClose").value=name&&cards[name]?cards[name].close:"";document.getElementById("cardPay").value=name&&cards[name]?cards[name].pay:"";document.getElementById("cardName").dataset.original=name}
+function closeCardEditor(){document.getElementById("cardModal").classList.remove("open")}
+function saveCard(){const name=document.getElementById("cardName").value.trim(),close=Number(document.getElementById("cardClose").value),pay=Number(document.getElementById("cardPay").value),original=document.getElementById("cardName").dataset.original;if(!name||!close||!pay||close<1||close>31||pay<1||pay>31){alert("カード名・締め日・支払日を入力してね🥹");return}if(original&&original!==name){cards[name]=cards[original];delete cards[original]}cards[name]={close,pay};localStorage.setItem("mayupi_cards",JSON.stringify(cards));closeCardEditor();render()}
+function editCard(encoded){openCardEditor(decodeURIComponent(encoded))}
+function openUtilityEditor(){document.getElementById("utilityModal").classList.add("open");document.getElementById("utilityMonth").value=ym();document.getElementById("utilityAmount").value=""}
+function closeUtilityEditor(){document.getElementById("utilityModal").classList.remove("open")}
+function saveUtility(){const m=document.getElementById("utilityMonth").value,t=document.getElementById("utilityType").value,a=Number(document.getElementById("utilityAmount").value);if(!m||!a){alert("対象月と金額を入力してね🥹");return}utilities[m]=utilities[m]||{};utilities[m][t]=a;localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));closeUtilityEditor();render()}
+function openSavingEditor(){document.getElementById("savingModal").classList.add("open");document.getElementById("savingMonth").value=ym();document.getElementById("savingAmount").value=savings[ym()]||50000}
+function closeSavingEditor(){document.getElementById("savingModal").classList.remove("open")}
+function saveSaving(){const m=document.getElementById("savingMonth").value,a=Number(document.getElementById("savingAmount").value);if(!m||a<0){alert("対象月と金額を入力してね🥹");return}savings[m]=a;localStorage.setItem("mayupi_savings",JSON.stringify(savings));closeSavingEditor();render()}
 function openSettings(){document.getElementById("settingsModal").classList.add("open")}
 function closeSettings(){document.getElementById("settingsModal").classList.remove("open")}
-function exportData(){
- const blob=new Blob([JSON.stringify({expenses,savings,cards,utilities},null,2)],{type:"application/json"}), a=document.createElement("a");
- a.href=URL.createObjectURL(blob);a.download="mayupi-kakeibo-backup.json";a.click();URL.revokeObjectURL(a.href);
-}
+function exportData(){const blob=new Blob([JSON.stringify({expenses,savings,cards,utilities},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mayupi-kakeibo-backup.json";a.click();URL.revokeObjectURL(a.href)}
 function clearData(){if(confirm("支出データをすべて削除します。よろしいですか？")){expenses=[];localStorage.removeItem("mayupi_expenses");render()}}
 render();
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator && location.protocol !== 'file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 
-<div class="modal" id="cardModal"><div class="sheet"><div class="row"><h2>💳 カードを追加</h2><button class="secondary" onclick="closeCardEditor()">閉じる</button></div><label>カード名</label><input id="cardName" placeholder="例：エポスカード"><div class="formgrid"><div><label>締め日</label><input id="cardClose" type="number" min="1" max="31" inputmode="numeric" placeholder="27"></div><div><label>支払日</label><input id="cardPay" type="number" min="1" max="31" inputmode="numeric" placeholder="27"></div></div><div class="actions"><button class="secondary" onclick="closeCardEditor()">キャンセル</button><button class="primary" onclick="saveCard()">保存する</button></div><div id="cardEditList"></div></div></div>
+<div class="modal" id="cardModal"><div class="sheet"><div class="row"><h2>💳 カードを追加</h2><button class="secondary" onclick="closeCardEditor()">閉じる</button></div><label>カード名</label><input id="cardName" placeholder="例：エポスカード"><div class="formgrid"><div><label>締め日</label><input id="cardClose" type="number" min="1" max="31" inputmode="numeric" placeholder="27"></div><div><label>支払日</label><input id="cardPay" type="number" min="1" max="31" inputmode="numeric" placeholder="27"></div></div><div class="actions"><button class="secondary" onclick="closeCardEditor()">キャンセル</button><button class="primary" onclick="saveCard()">保存する</button></div></div></div>
 <div class="modal" id="utilityModal"><div class="sheet"><div class="row"><h2>⚡ 水道光熱費</h2><button class="secondary" onclick="closeUtilityEditor()">閉じる</button></div><label>対象月</label><input id="utilityMonth" type="month"><label>項目</label><select id="utilityType"><option>電気</option><option>ガス</option><option>水道</option></select><label>実績金額</label><input id="utilityAmount" type="number" inputmode="decimal" placeholder="8000"><div class="actions"><button class="secondary" onclick="closeUtilityEditor()">キャンセル</button><button class="primary" onclick="saveUtility()">保存する</button></div></div></div>
 <div class="modal" id="savingModal"><div class="sheet"><div class="row"><h2>🐖 先取り貯金</h2><button class="secondary" onclick="closeSavingEditor()">閉じる</button></div><label>対象月</label><input id="savingMonth" type="month"><label>貯金額</label><input id="savingAmount" type="number" inputmode="decimal" placeholder="50000"><div class="actions"><button class="secondary" onclick="closeSavingEditor()">キャンセル</button><button class="primary" onclick="saveSaving()">保存する</button></div></div></div>
-
 </body>
 </html>
