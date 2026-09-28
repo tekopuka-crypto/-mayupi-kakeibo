@@ -53,7 +53,7 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,selec
   <details class="card" open><summary>💳 カード設定</summary><div id="cardList"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openCardEditor()">＋ カードを追加</button></details>
   <details class="card"><summary>⚡ 水道光熱費の実績</summary><div id="utilitySettings"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openUtilityEditor()">＋ 実績を入力</button></details>
   <div class="card"><b>🐖 先取り貯金</b><div class="actions"><button class="secondary" onclick="openSavingEditor()">今月の貯金額を入力</button></div></div>
-  <div class="card"><b>💾 データ</b><p class="muted">支出・貯金・カード・光熱費はこの端末のブラウザ内に保存されます。Safari版からホーム画面アプリへ移すときや、機種変更・ブラウザ削除前は「💾 バックアップ」→「📥 復元」を使ってね。</p><div class="actions"><button class="secondary" onclick="exportData()">💾 バックアップ</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 復元</button><button class="danger" onclick="clearData()">全データ削除</button>
+  <div class="card"><b>💾 データ</b><p class="muted">支出・貯金・カード・光熱費はこの端末に二重保存しています。<span id="storageStatus">保存状態を確認中…</span><br>機種変更・ブラウザ削除前は「💾 バックアップ」→「📥 復元」を使ってね。</p><div class="actions"><button class="secondary" onclick="exportData()">💾 バックアップ</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 復元</button><button class="danger" onclick="clearData()">全データ削除</button>
   <input id="importFile" type="file" accept="application/json,.json" style="display:none" onchange="importData(event)"></div></div>
 </div></div>
 
@@ -67,10 +67,81 @@ const FIXED=[
 ];
 const UTIL={電気:8000,ガス:5000,水道:3000};
 const DEFAULT_CARDS={"SAISONカード":{close:10,pay:4},"SAISONカード プレミアム":{close:10,pay:4},"au PAYカード":{close:15,pay:10},"エポスカード":{close:27,pay:27}};
-let cards=JSON.parse(localStorage.getItem("mayupi_cards")||"null")||DEFAULT_CARDS;
+
+// iPhoneのホーム画面Webアプリでは、localStorageだけに家計データを置くと、
+// WebKitのストレージ整理などでデータが消えることがあります。
+// IndexedDBを本体、localStorageをバックアップとして二重保存します。
+const DB_NAME="mayupi_kakeibo_db";
+const DB_VERSION=1;
+const STORE_NAME="app_state";
+const STATE_KEY="current";
+let cards=JSON.parse(localStorage.getItem("mayupi_cards")||"null")||JSON.parse(JSON.stringify(DEFAULT_CARDS));
 let utilities=JSON.parse(localStorage.getItem("mayupi_utilities")||"{}");
 let expenses=JSON.parse(localStorage.getItem("mayupi_expenses")||"[]");
 let savings=JSON.parse(localStorage.getItem("mayupi_savings")||"{}");
+let storageReady=false;
+let saveTimer=null;
+
+function openDB(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(new Error('IndexedDB unavailable'));return;}
+  const req=indexedDB.open(DB_NAME,DB_VERSION);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME);};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
+ });
+}
+function idbGet(){
+ return openDB().then(db=>new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE_NAME,'readonly'),req=tx.objectStore(STORE_NAME).get(STATE_KEY);
+  req.onsuccess=()=>{db.close();resolve(req.result||null)};
+  req.onerror=()=>{db.close();reject(req.error||new Error('IndexedDB read failed'))};
+ }));
+}
+function idbPut(state){
+ return openDB().then(db=>new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).put(state,STATE_KEY);
+  tx.oncomplete=()=>{db.close();resolve()};
+  tx.onerror=()=>{db.close();reject(tx.error||new Error('IndexedDB write failed'))};
+ }));
+}
+function stateSnapshot(){return {version:2,updatedAt:Date.now(),expenses,savings,cards,utilities};}
+function mirrorLocalStorage(){
+ localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));
+ localStorage.setItem("mayupi_savings",JSON.stringify(savings));
+ localStorage.setItem("mayupi_cards",JSON.stringify(cards));
+ localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));
+ localStorage.setItem("mayupi_updated_at",String(Date.now()));
+}
+async function persistState(){
+ const state=stateSnapshot();
+ try{mirrorLocalStorage();}catch(e){}
+ try{await idbPut(state);storageReady=true;}catch(e){storageReady=false;}
+ updateStorageStatus();
+}
+function queuePersist(){
+ clearTimeout(saveTimer);
+ saveTimer=setTimeout(()=>persistState(),0);
+}
+function updateStorageStatus(){
+ const el=document.getElementById('storageStatus');
+ if(el)el.textContent=storageReady?'☁️ データは端末に保存中':'⚠️ 保存状態を確認してね';
+}
+async function loadPersistentState(){
+ try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist();}catch(e){}
+ let dbState=null;
+ try{dbState=await idbGet();}catch(e){}
+ const localUpdated=Number(localStorage.getItem('mayupi_updated_at')||0);
+ if(dbState && Array.isArray(dbState.expenses) && Number(dbState.updatedAt||0)>=localUpdated){
+  expenses=dbState.expenses||[];savings=dbState.savings||{};cards=dbState.cards||JSON.parse(JSON.stringify(DEFAULT_CARDS));utilities=dbState.utilities||{};
+ }else{
+  // 既存のlocalStorageデータを初回だけIndexedDBへ移行
+  await persistState();
+ }
+ storageReady=true;
+ updateStorageStatus();
+ render();
+}
 
 function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP")}
 function localISO(d=new Date()){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
@@ -91,14 +162,14 @@ function saveExpense(){
  const amount=Number(document.getElementById("amount").value),date=document.getElementById("date").value;
  if(!amount||amount<0||!date){alert("金額と利用日を入力してね🥹");return}
  expenses.push({id:Date.now(),amount,date,category:document.getElementById("category").value,method:document.getElementById("method").value,note:document.getElementById("note").value});
- localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));closeExpense();render();
+ queuePersist();closeExpense();render();
 }
 function registerCommute(){
  const date=localISO();
  expenses.push({id:Date.now(),amount:586,date,category:"🚃 交通費",method:"SAISONカード プレミアム",note:"通勤（和光市→永田町 往復）"});
- localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));render();
+ queuePersist();render();
 }
-function deleteExpense(id){expenses=expenses.filter(x=>x.id!==id);localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));render()}
+function deleteExpense(id){expenses=expenses.filter(x=>x.id!==id);queuePersist();render()}
 function render(){
  const now=new Date(),m=ym(now),ex=monthExpenses(m);
  document.getElementById("monthLabel").textContent=`${now.getFullYear()}年${now.getMonth()+1}月`;
@@ -159,14 +230,14 @@ function renderPayments(){
 }
 function openCardEditor(name=""){document.getElementById("cardModal").classList.add("open");document.getElementById("cardName").value=name;document.getElementById("cardClose").value=name&&cards[name]?cards[name].close:"";document.getElementById("cardPay").value=name&&cards[name]?cards[name].pay:"";document.getElementById("cardName").dataset.original=name}
 function closeCardEditor(){document.getElementById("cardModal").classList.remove("open")}
-function saveCard(){const name=document.getElementById("cardName").value.trim(),close=Number(document.getElementById("cardClose").value),pay=Number(document.getElementById("cardPay").value),original=document.getElementById("cardName").dataset.original;if(!name||!close||!pay||close<1||close>31||pay<1||pay>31){alert("カード名・締め日・支払日を入力してね🥹");return}if(original&&original!==name){cards[name]=cards[original];delete cards[original]}cards[name]={close,pay};localStorage.setItem("mayupi_cards",JSON.stringify(cards));closeCardEditor();render()}
+function saveCard(){const name=document.getElementById("cardName").value.trim(),close=Number(document.getElementById("cardClose").value),pay=Number(document.getElementById("cardPay").value),original=document.getElementById("cardName").dataset.original;if(!name||!close||!pay||close<1||close>31||pay<1||pay>31){alert("カード名・締め日・支払日を入力してね🥹");return}if(original&&original!==name){cards[name]=cards[original];delete cards[original]}cards[name]={close,pay};queuePersist();closeCardEditor();render()}
 function editCard(encoded){openCardEditor(decodeURIComponent(encoded))}
 function openUtilityEditor(){document.getElementById("utilityModal").classList.add("open");document.getElementById("utilityMonth").value=ym();document.getElementById("utilityAmount").value=""}
 function closeUtilityEditor(){document.getElementById("utilityModal").classList.remove("open")}
-function saveUtility(){const m=document.getElementById("utilityMonth").value,t=document.getElementById("utilityType").value,a=Number(document.getElementById("utilityAmount").value);if(!m||!a){alert("対象月と金額を入力してね🥹");return}utilities[m]=utilities[m]||{};utilities[m][t]=a;localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));closeUtilityEditor();render()}
+function saveUtility(){const m=document.getElementById("utilityMonth").value,t=document.getElementById("utilityType").value,a=Number(document.getElementById("utilityAmount").value);if(!m||!a){alert("対象月と金額を入力してね🥹");return}utilities[m]=utilities[m]||{};utilities[m][t]=a;queuePersist();closeUtilityEditor();render()}
 function openSavingEditor(){document.getElementById("savingModal").classList.add("open");document.getElementById("savingMonth").value=ym();document.getElementById("savingAmount").value=savings[ym()]||50000}
 function closeSavingEditor(){document.getElementById("savingModal").classList.remove("open")}
-function saveSaving(){const m=document.getElementById("savingMonth").value,a=Number(document.getElementById("savingAmount").value);if(!m||a<0){alert("対象月と金額を入力してね🥹");return}savings[m]=a;localStorage.setItem("mayupi_savings",JSON.stringify(savings));closeSavingEditor();render()}
+function saveSaving(){const m=document.getElementById("savingMonth").value,a=Number(document.getElementById("savingAmount").value);if(!m||a<0){alert("対象月と金額を入力してね🥹");return}savings[m]=a;queuePersist();closeSavingEditor();render()}
 function openSettings(){document.getElementById("settingsModal").classList.add("open")}
 function closeSettings(){document.getElementById("settingsModal").classList.remove("open")}
 function exportData(){
@@ -178,16 +249,13 @@ function importData(event){
  const file=event.target.files&&event.target.files[0];
  if(!file)return;
  const reader=new FileReader();
- reader.onload=()=>{
+ reader.onload=async()=>{
   try{
    const data=JSON.parse(reader.result);
    if(!data||!Array.isArray(data.expenses)||typeof data.savings!=="object"||typeof data.cards!=="object"||typeof data.utilities!=="object")throw new Error("format");
    if(!confirm("バックアップのデータで、このアプリの現在のデータを置き換えます。よろしいですか？"))return;
-   expenses=data.expenses; savings=data.savings||{}; cards=data.cards||DEFAULT_CARDS; utilities=data.utilities||{};
-   localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));
-   localStorage.setItem("mayupi_savings",JSON.stringify(savings));
-   localStorage.setItem("mayupi_cards",JSON.stringify(cards));
-   localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));
+   expenses=data.expenses; savings=data.savings||{}; cards=data.cards||JSON.parse(JSON.stringify(DEFAULT_CARDS)); utilities=data.utilities||{};
+   await persistState();
    render();
    alert("復元できたよ🥰\nデータを確認してみてね！");
   }catch(e){alert("このバックアップファイルは読み込めませんでした🥹\n「まゆぴの家計簿」で作ったJSONファイルを選んでね。");}
@@ -196,8 +264,8 @@ function importData(event){
  reader.onerror=()=>{alert("ファイルを読み込めませんでした🥹");event.target.value=""};
  reader.readAsText(file);
 }
-function clearData(){if(confirm("支出データをすべて削除します。よろしいですか？")){expenses=[];localStorage.removeItem("mayupi_expenses");render()}}
-render();
+function clearData(){if(confirm("支出データをすべて削除します。よろしいですか？")){expenses=[];queuePersist();render()}}
+loadPersistentState();
 if('serviceWorker' in navigator && location.protocol !== 'file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 
