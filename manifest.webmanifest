@@ -1,1 +1,9 @@
-{"name":"まゆぴの家計管理","short_name":"まゆぴ家計簿","start_url":"./?v=5","display":"standalone","background_color":"#fff8fb","theme_color":"#e985aa","lang":"ja","icons":[]}
+{
+  "name":"まゆぴ家計簿",
+  "short_name":"まゆぴ家計簿",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#fff7fa",
+  "theme_color":"#f6a8c5",
+  "icons":[]
+}

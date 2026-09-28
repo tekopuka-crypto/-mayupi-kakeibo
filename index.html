@@ -70,7 +70,7 @@ const METHODS=["現金","みずほ銀行","ゆうちょ銀行","SAISONカード"
 const FIXED=[["家賃",74930,"みずほ銀行",27],["携帯",10000,"au PAYカード",null],["インターネット",4300,"SAISONカード プレミアム",null],["バイクローン",11000,"ゆうちょ銀行",null],["バイク保険",4000,"ゆうちょ銀行",null],["バイク置き場",2730,"みずほ銀行",27],["奨学金",11062,"ゆうちょ銀行",null],["下着",15000,"ゆうちょ銀行",null],["ウォーターサーバー",3140,"SAISONカード プレミアム",null],["Apple Music",2500,"SAISONカード プレミアム",null]];
 const DEFAULT_UTIL_BUDGETS={電気:8000,ガス:5000,水道:3000};
 const DEFAULT_CARDS={"SAISONカード":{close:10,pay:4},"SAISONカード プレミアム":{close:10,pay:4},"au PAYカード":{close:15,pay:10},"エポスカード":{close:27,pay:27}};
-const APP_VERSION=8,SAVING_GOAL_DEFAULT=50000;
+const APP_VERSION=9,SAVING_GOAL_DEFAULT=50000;
 const DB_NAME="mayupi_kakeibo_db",DB_VERSION=3,STORE_NAME="app_state",STATE_KEY="current";
 let budgets=Object.fromEntries(CAT_DEFAULTS),utilBudgets={...DEFAULT_UTIL_BUDGETS};
 let cards=JSON.parse(localStorage.getItem("mayupi_cards")||"null")||structuredClone(DEFAULT_CARDS);
@@ -124,6 +124,8 @@ function localISO(d=new Date()){const z=new Date(d.getTime()-d.getTimezoneOffset
 function ym(d=new Date()){return localISO(d).slice(0,7)}
 function fmtDate(s){const d=new Date(s+'T00:00:00');return`${d.getMonth()+1}/${d.getDate()}`}
 function monthExpenses(m){return expenses.filter(x=>x.date&&x.date.slice(0,7)===m)}
+function fixedEffectiveTotal(m){const actuals=fixedActuals[m]||{};return FIXED.reduce((sum,x)=>sum+(actuals[x[0]]!=null?Number(actuals[x[0]]||0):Number(x[1]||0)),0)}
+function fixedRegisteredActualTotal(m){const actuals=fixedActuals[m]||{};return FIXED.reduce((sum,x)=>sum+(actuals[x[0]]!=null?Number(actuals[x[0]]||0):0),0)}
 function scrollToId(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
 function openExpense(){document.getElementById('expenseModal').classList.add('open');document.getElementById('amount').value=0;document.getElementById('date').value=localISO();document.getElementById('category').innerHTML=Object.keys(budgets).map(x=>`<option>${x}</option>`).join('');document.getElementById('method').innerHTML=METHODS.map(x=>`<option ${x==='SAISONカード プレミアム'?'selected':''}>${x}</option>`).join('');document.getElementById('note').value=''}
 function closeExpense(){document.getElementById('expenseModal').classList.remove('open')}
@@ -132,12 +134,13 @@ function registerCommute(){expenses.push({id:Date.now()+Math.random(),amount:586
 function deleteExpense(id){if(confirm('この支出を削除する？')){expenses=expenses.filter(x=>x.id!==id);queuePersist();render()}}
 function render(){
   const now=new Date(),m=ym(now),ex=monthExpenses(m),spent=ex.reduce((s,x)=>s+x.amount,0);
-  const fixed=FIXED.reduce((s,x)=>s+x[1],0),save=savings[m]??0,savingGoal=SAVING_GOAL_DEFAULT;
+  const fixed=fixedEffectiveTotal(m),plannedFixed=FIXED.reduce((s,x)=>s+x[1],0),save=savings[m]??0,savingGoal=SAVING_GOAL_DEFAULT;
   const utilBudget=Object.values(utilBudgets).reduce((s,x)=>s+Number(x||0),0);
   const remaining=277307-savingGoal-fixed-utilBudget-spent;
   document.getElementById('monthLabel').textContent=`${now.getFullYear()}年${now.getMonth()+1}月`;
   document.getElementById('remaining').textContent=yen(remaining);
   document.getElementById('heroNote').textContent=`手取り ¥277,307 − 先取り貯金目標 ${yen(savingGoal)} − 固定支出 ${yen(fixed)} − 光熱費予算 ${yen(utilBudget)} − 今月の支出`;
+  document.getElementById('fixed').title=`今月の固定支出：未登録は予定額、登録済みは実績額を反映（予定 ${yen(plannedFixed)}）`;
   document.getElementById('spent').textContent=yen(spent); document.getElementById('saved').textContent=yen(save); document.getElementById('fixed').textContent=yen(fixed);
   document.getElementById('categories').innerHTML=Object.entries(budgets).map(([name,budget])=>{const used=ex.filter(x=>x.category===name).reduce((a,x)=>a+x.amount,0),left=budget-used,pct=budget?Math.min(100,Math.max(0,used/budget*100)):100,over=left<0;return`<div class="card ${over?'over-budget':''}"><div class="row"><b>${name}</b><b class="budget-main">${over?'予算超過 '+yen(-left):'あと '+yen(left)}</b></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="row muted" style="margin-top:7px"><span>予算 ${yen(budget)}</span><span>使用 ${yen(used)}</span></div></div>`}).join('');
   document.getElementById('utilities').innerHTML=['電気','ガス','水道'].map(k=>{const u=utilities[m]?.[k],val=u?.amount??u,confirmed=typeof u==='object'?!!u.confirmed:false;return`<div class="card"><div class="row"><span>${k}</span><b>${val!=null?yen(val):yen(utilBudgets[k])}</b></div><div class="row" style="margin-top:6px"><span class="muted">予算 ${yen(utilBudgets[k])}${val!=null?` ・ 実績 ${yen(val)}`:' ・ 未入力'}</span>${val!=null?(confirmed?'<span class="confirm">✓ 確定</span>':'<span class="pending">実績・未確定</span>'):''}</div></div>`}).join('');
@@ -168,8 +171,8 @@ function openMonthlyDetail(type){
     html=`<div class="card"><div class="row"><span>今月の貯金目標</span><b>${yen(SAVING_GOAL_DEFAULT)}</b></div><div class="row" style="margin-top:8px"><span>実績</span><b>${yen(save)}</b></div><div class="muted" style="font-size:13px;margin-top:8px">実際に貯金した金額だけを実績として登録します。未入力は¥0です。</div></div><button class="primary" style="width:100%;margin-top:10px" onclick="openSavingEditorFromDetail()">✏️ 貯金実績を登録・変更</button><button class="secondary" style="width:100%;margin-top:8px" onclick="resetSavingActual()">未入力（¥0）に戻す</button>`;
   }else{
     const actuals=fixedActuals[m]||{};
-    const totalExpected=FIXED.reduce((s,x)=>s+x[1],0),entered=FIXED.filter(x=>actuals[x[0]]!=null).length,totalActual=FIXED.reduce((s,x)=>s+(actuals[x[0]]==null?0:Number(actuals[x[0]])),0);
-    html=`<div class="card"><div class="row"><span>固定支出予定</span><b>${yen(totalExpected)}</b></div><div class="row" style="margin-top:8px"><span>実績登録済み</span><b>${entered} / ${FIXED.length}件</b></div><div class="row" style="margin-top:8px"><span>登録済み実績合計</span><b>${yen(totalActual)}</b></div><div class="muted" style="font-size:13px;margin-top:8px">予定額ではなく、実際に引き落とされた金額を項目ごとに登録できます。</div></div><div class="card">${FIXED.map(x=>{const v=actuals[x[0]];return `<div class="fixedrow"><span>${x[0]}<br><small class="muted">予定 ${yen(x[1])}・${x[2]}</small></span><span style="text-align:right"><b>${v==null?'未登録':yen(v)}</b><br><button class="secondary smallbtn" onclick="openFixedActualEditor('${encodeURIComponent(x[0])}')">${v==null?'実績を登録':'変更'}</button></span></div>`}).join('')}</div>`;
+    const totalExpected=FIXED.reduce((s,x)=>s+x[1],0),entered=FIXED.filter(x=>actuals[x[0]]!=null).length,totalActual=fixedRegisteredActualTotal(m),effectiveTotal=fixedEffectiveTotal(m);
+    html=`<div class="card"><div class="row"><span>今月の固定支出</span><b>${yen(effectiveTotal)}</b></div><div class="row" style="margin-top:8px"><span>固定支出予定</span><b>${yen(totalExpected)}</b></div><div class="row" style="margin-top:8px"><span>実績登録済み</span><b>${entered} / ${FIXED.length}件</b></div><div class="row" style="margin-top:8px"><span>登録済み実績合計</span><b>${yen(totalActual)}</b></div><div class="muted" style="font-size:13px;margin-top:8px">実績を登録した項目は実績額、未登録の項目は予定額を「今月の固定支出」に反映するよ🩷</div></div><div class="card">${FIXED.map(x=>{const v=actuals[x[0]],effective=v==null?x[1]:Number(v);return `<div class="fixedrow"><span>${x[0]}<br><small class="muted">予定 ${yen(x[1])}・${x[2]}</small></span><span style="text-align:right"><b>${v==null?'予定 '+yen(effective):'実績 '+yen(effective)}</b><br><button class="secondary smallbtn" onclick="openFixedActualEditor('${encodeURIComponent(x[0])}')">${v==null?'実績を登録':'変更'}</button></span></div>`}).join('')}</div>`;
   }
   document.getElementById('monthlyDetailBody').innerHTML=html; document.getElementById('monthlyDetailModal').classList.add('open');
 }
