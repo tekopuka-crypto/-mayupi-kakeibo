@@ -53,7 +53,8 @@ label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input,selec
   <details class="card" open><summary>💳 カード設定</summary><div id="cardList"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openCardEditor()">＋ カードを追加</button></details>
   <details class="card"><summary>⚡ 水道光熱費の実績</summary><div id="utilitySettings"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openUtilityEditor()">＋ 実績を入力</button></details>
   <div class="card"><b>🐖 先取り貯金</b><div class="actions"><button class="secondary" onclick="openSavingEditor()">今月の貯金額を入力</button></div></div>
-  <div class="card"><b>💾 データ</b><p class="muted">支出はこの端末のブラウザ内に保存されます。機種変更・ブラウザ削除前にバックアップしてください。</p><div class="actions"><button class="secondary" onclick="exportData()">バックアップ</button><button class="danger" onclick="clearData()">全データ削除</button></div></div>
+  <div class="card"><b>💾 データ</b><p class="muted">支出・貯金・カード・光熱費はこの端末のブラウザ内に保存されます。Safari版からホーム画面アプリへ移すときや、機種変更・ブラウザ削除前は「💾 バックアップ」→「📥 復元」を使ってね。</p><div class="actions"><button class="secondary" onclick="exportData()">💾 バックアップ</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 復元</button><button class="danger" onclick="clearData()">全データ削除</button>
+  <input id="importFile" type="file" accept="application/json,.json" style="display:none" onchange="importData(event)"></div></div>
 </div></div>
 
 <script>
@@ -168,7 +169,33 @@ function closeSavingEditor(){document.getElementById("savingModal").classList.re
 function saveSaving(){const m=document.getElementById("savingMonth").value,a=Number(document.getElementById("savingAmount").value);if(!m||a<0){alert("対象月と金額を入力してね🥹");return}savings[m]=a;localStorage.setItem("mayupi_savings",JSON.stringify(savings));closeSavingEditor();render()}
 function openSettings(){document.getElementById("settingsModal").classList.add("open")}
 function closeSettings(){document.getElementById("settingsModal").classList.remove("open")}
-function exportData(){const blob=new Blob([JSON.stringify({expenses,savings,cards,utilities},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mayupi-kakeibo-backup.json";a.click();URL.revokeObjectURL(a.href)}
+function exportData(){
+ const payload={version:1,exportedAt:new Date().toISOString(),expenses,savings,cards,utilities};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`mayupi-kakeibo-backup-${localISO()}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importData(event){
+ const file=event.target.files&&event.target.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(reader.result);
+   if(!data||!Array.isArray(data.expenses)||typeof data.savings!=="object"||typeof data.cards!=="object"||typeof data.utilities!=="object")throw new Error("format");
+   if(!confirm("バックアップのデータで、このアプリの現在のデータを置き換えます。よろしいですか？"))return;
+   expenses=data.expenses; savings=data.savings||{}; cards=data.cards||DEFAULT_CARDS; utilities=data.utilities||{};
+   localStorage.setItem("mayupi_expenses",JSON.stringify(expenses));
+   localStorage.setItem("mayupi_savings",JSON.stringify(savings));
+   localStorage.setItem("mayupi_cards",JSON.stringify(cards));
+   localStorage.setItem("mayupi_utilities",JSON.stringify(utilities));
+   render();
+   alert("復元できたよ🥰\nデータを確認してみてね！");
+  }catch(e){alert("このバックアップファイルは読み込めませんでした🥹\n「まゆぴの家計簿」で作ったJSONファイルを選んでね。");}
+  event.target.value="";
+ };
+ reader.onerror=()=>{alert("ファイルを読み込めませんでした🥹");event.target.value=""};
+ reader.readAsText(file);
+}
 function clearData(){if(confirm("支出データをすべて削除します。よろしいですか？")){expenses=[];localStorage.removeItem("mayupi_expenses");render()}}
 render();
 if('serviceWorker' in navigator && location.protocol !== 'file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
