@@ -47,7 +47,7 @@ section{margin:22px 0}h2{font-size:19px;margin:0 0 10px}.card{background:var(--c
 
 <div class="modal" id="settingsModal"><div class="sheet"><div class="row"><h2>🎀 設定・家計管理</h2><button class="secondary" onclick="closeSettings()">閉じる</button></div>
 <div class="card"><div class="row"><span>手取り</span><b>¥277,307</b></div><div class="row"><span>先取り貯金目標</span><b>¥50,000</b></div><div class="row"><span>固定支出</span><b>¥138,662</b></div></div>
-<details class="card" open><summary>🎀 変動費の予算を変更</summary><p class="muted" style="font-size:13px">カテゴリごとの月予算を自由に変更できます。変更は翌月ではなく、今後の月にも使われます。</p><div id="budgetList"></div><div class="actions"><button class="primary" onclick="saveBudgets()">予算を保存する</button></div></details>
+<details class="card" open><summary>🎀 変動費の予算を変更</summary><p class="muted" style="font-size:13px">カテゴリごとの月予算を自由に変更できます。変更は翌月ではなく、今後の月にも使われます。</p><div id="budgetList"></div><div id="budgetValidation" class="muted" style="font-size:13px;margin-top:8px"></div><div class="actions"><button id="saveBudgetsBtn" class="primary" onclick="saveBudgets()">予算を保存する</button></div></details>
 <details class="card"><summary>⚡ 水道光熱費の予算</summary><div id="utilityBudgetList"></div><div class="actions"><button class="primary" onclick="saveUtilityBudgets()">光熱費予算を保存</button></div></details>
 <details class="card"><summary>固定支出の内訳</summary><div id="fixedList"></div></details>
 <details class="card" open><summary>💳 カード設定</summary><div id="cardList"></div><button class="primary" style="width:100%;margin-top:10px" onclick="openCardEditor()">＋ カードを追加</button></details>
@@ -70,7 +70,7 @@ const METHODS=["現金","みずほ銀行","ゆうちょ銀行","SAISONカード"
 const FIXED=[["家賃",74930,"みずほ銀行",27],["携帯",10000,"au PAYカード",null],["インターネット",4300,"SAISONカード プレミアム",null],["バイクローン",11000,"ゆうちょ銀行",null],["バイク保険",4000,"ゆうちょ銀行",null],["バイク置き場",2730,"みずほ銀行",27],["奨学金",11062,"ゆうちょ銀行",null],["下着",15000,"ゆうちょ銀行",null],["ウォーターサーバー",3140,"SAISONカード プレミアム",null],["Apple Music",2500,"SAISONカード プレミアム",null]];
 const DEFAULT_UTIL_BUDGETS={電気:8000,ガス:5000,水道:3000};
 const DEFAULT_CARDS={"SAISONカード":{close:10,pay:4},"SAISONカード プレミアム":{close:10,pay:4},"au PAYカード":{close:15,pay:10},"エポスカード":{close:27,pay:27}};
-const APP_VERSION=9,SAVING_GOAL_DEFAULT=50000;
+const APP_VERSION=11,SAVING_GOAL_DEFAULT=50000;
 const DB_NAME="mayupi_kakeibo_db",DB_VERSION=3,STORE_NAME="app_state",STATE_KEY="current";
 let budgets=Object.fromEntries(CAT_DEFAULTS),utilBudgets={...DEFAULT_UTIL_BUDGETS};
 let cards=JSON.parse(localStorage.getItem("mayupi_cards")||"null")||structuredClone(DEFAULT_CARDS);
@@ -195,9 +195,44 @@ function resetSavingActual(){const m=ym();delete savings[m];queuePersist();rende
 function monthSummary(m){const ex=monthExpenses(m),spent=ex.reduce((s,x)=>s+x.amount,0),save=savings[m]??0,util=Object.values(utilities[m]||{}).reduce((s,x)=>s+(typeof x==='object'?x.amount:x||0),0);return{spent,save,util,count:ex.length}}
 function renderHistory(){const months=new Set(expenses.map(x=>x.date?.slice(0,7)).filter(Boolean));months.add(ym());Object.keys(savings).forEach(m=>months.add(m));Object.keys(utilities).forEach(m=>months.add(m));Object.keys(fixedActuals).forEach(m=>months.add(m));const arr=[...months].sort().reverse().slice(0,12);document.getElementById('history').innerHTML=arr.map(m=>{const s=monthSummary(m);return`<details class="card month-card"><summary><div class="row"><span><b>${m.replace('-','年')}月</b><br><span class="muted">支出 ${s.count}件</span></span><b>${yen(s.spent)}</b></div></summary><div style="margin-top:10px"><div class="row"><span>💸 支出</span><b>${yen(s.spent)}</b></div><div class="row"><span>🐖 貯金</span><b>${yen(s.save)}</b></div><div class="row"><span>⚡ 光熱費実績</span><b>${s.util?yen(s.util):'未入力'}</b></div><button class="secondary" style="width:100%;margin-top:10px" onclick="openHistoryCalendar('${m}')">📅 この月のカレンダーを見る</button></div></details>`}).join('')||'<div class="card empty">まだ過去データがないよ🌱</div>'}
 function openHistoryCalendar(m){calendarMonth=m;scrollToId('calendarSection');renderCalendar()}
-function renderSettings(){document.getElementById('fixedList').innerHTML=FIXED.map(x=>`<div class="fixedrow"><span>${x[0]}<br><small class="muted">${x[2]}${x[3]?`・毎月${x[3]}日`:'・支払日未設定'}</small></span><b>${yen(x[1])}</b></div>`).join('');document.getElementById('cardList').innerHTML=Object.entries(cards).map(([name,info])=>`<div class="fixedrow"><span>💳 ${name}<br><small class="muted">${info.close}日締め・翌月${info.pay}日払い</small></span><button class="secondary smallbtn" onclick="editCard('${encodeURIComponent(name)}')">編集</button></div>`).join('');document.getElementById('utilitySettings').innerHTML=['電気','ガス','水道'].map(k=>{const entries=Object.keys(utilities).sort().reverse().filter(m=>utilities[m]?.[k]!=null).slice(0,6);return`<div style="padding:8px 0"><b>${k}</b>${entries.length?entries.map(m=>{const u=utilities[m][k],v=typeof u==='object'?u.amount:u,c=typeof u==='object'?u.confirmed:false;return`<div class="fixedrow"><span>${m}</span><span>${yen(v)} ${c?'<span class="confirm">✓確定</span>':'<span class="pending">未確定</span>'}</span></div>`}).join(''):'<div class="muted" style="padding:8px 0">実績なし</div>'}</div>`}).join('');document.getElementById('budgetList').innerHTML=Object.entries(budgets).map(([name,v])=>`<div class="budget-edit" style="margin:8px 0"><span>${name}</span><input data-budget="${encodeURIComponent(name)}" type="number" min="0" inputmode="numeric" value="${v}"></div>`).join('');document.getElementById('utilityBudgetList').innerHTML=Object.entries(utilBudgets).map(([name,v])=>`<div class="budget-edit" style="margin:8px 0"><span>${name}</span><input data-util-budget="${name}" type="number" min="0" inputmode="numeric" value="${v}"></div>`).join('')}
+function renderSettings(){document.getElementById('fixedList').innerHTML=FIXED.map(x=>`<div class="fixedrow"><span>${x[0]}<br><small class="muted">${x[2]}${x[3]?`・毎月${x[3]}日`:'・支払日未設定'}</small></span><b>${yen(x[1])}</b></div>`).join('');document.getElementById('cardList').innerHTML=Object.entries(cards).map(([name,info])=>`<div class="fixedrow"><span>💳 ${name}<br><small class="muted">${info.close}日締め・翌月${info.pay}日払い</small></span><button class="secondary smallbtn" onclick="editCard('${encodeURIComponent(name)}')">編集</button></div>`).join('');document.getElementById('utilitySettings').innerHTML=['電気','ガス','水道'].map(k=>{const entries=Object.keys(utilities).sort().reverse().filter(m=>utilities[m]?.[k]!=null).slice(0,6);return`<div style="padding:8px 0"><b>${k}</b>${entries.length?entries.map(m=>{const u=utilities[m][k],v=typeof u==='object'?u.amount:u,c=typeof u==='object'?u.confirmed:false;return`<div class="fixedrow"><span>${m}</span><span>${yen(v)} ${c?'<span class="confirm">✓確定</span>':'<span class="pending">未確定</span>'}</span></div>`}).join(''):'<div class="muted" style="padding:8px 0">実績なし</div>'}</div>`}).join('');const budgetIncome=277307,budgetSavingGoal=SAVING_GOAL_DEFAULT,budgetPlannedFixed=FIXED.reduce((s,x)=>s+Number(x[1]||0),0),budgetUtil=Object.values(utilBudgets).reduce((s,x)=>s+Number(x||0),0),budgetMax=Math.max(0,budgetIncome-budgetSavingGoal-budgetPlannedFixed-budgetUtil),budgetTotal=Object.values(budgets).reduce((s,x)=>s+Number(x||0),0);document.getElementById('budgetList').innerHTML=`<div class="card" style="margin:8px 0 12px;background:#fff7fa"><div class="row"><span>変動費に使える予算上限</span><b>${yen(budgetMax)}</b></div><div class="row muted" style="margin-top:6px"><span>現在の予算合計</span><span>${yen(budgetTotal)} / ${yen(budgetMax)}</span></div><small class="muted">※先取り貯金・固定支出・光熱費予算を確保した残りの金額が上限だよ🩷</small></div>`+Object.entries(budgets).map(([name,v])=>`<div class="budget-edit" style="margin:8px 0"><span>${name}</span><input data-budget="${encodeURIComponent(name)}" type="number" min="0" inputmode="numeric" value="${v}"></div>`).join('');document.getElementById('utilityBudgetList').innerHTML=Object.entries(utilBudgets).map(([name,v])=>`<div class="budget-edit" style="margin:8px 0"><span>${name}</span><input data-util-budget="${name}" type="number" min="0" inputmode="numeric" value="${v}"></div>`).join('');document.querySelectorAll('[data-budget]').forEach(i=>i.addEventListener('input',validateBudgetDraft));validateBudgetDraft()}
 function openSettings(){renderSettings();document.getElementById('settingsModal').classList.add('open')}function closeSettings(){document.getElementById('settingsModal').classList.remove('open')}
-function saveBudgets(){document.querySelectorAll('[data-budget]').forEach(i=>{budgets[decodeURIComponent(i.dataset.budget)]=Math.max(0,Number(i.value)||0)});queuePersist();render();alert('予算を更新したよ🥰')}
+function getBudgetDraft(){
+  const next={...budgets};
+  document.querySelectorAll('[data-budget]').forEach(i=>{next[decodeURIComponent(i.dataset.budget)]=Math.max(0,Number(i.value)||0)});
+  return next;
+}
+function budgetLimitInfo(next){
+  const income=277307, savingGoal=SAVING_GOAL_DEFAULT;
+  const plannedFixed=FIXED.reduce((s,x)=>s+Number(x[1]||0),0);
+  const utilBudget=Object.values(utilBudgets).reduce((s,x)=>s+Number(x||0),0);
+  const maxVariable=Math.max(0,income-savingGoal-plannedFixed-utilBudget);
+  const totalVariable=Object.values(next).reduce((s,x)=>s+Number(x||0),0);
+  return {maxVariable,totalVariable,over:Math.max(0,totalVariable-maxVariable)};
+}
+function validateBudgetDraft(){
+  const info=budgetLimitInfo(getBudgetDraft());
+  const box=document.getElementById('budgetValidation'),btn=document.getElementById('saveBudgetsBtn');
+  if(!box||!btn)return info;
+  if(info.over>0){
+    box.innerHTML=`<span style="color:#c84b63;font-weight:800">⚠️ 上限を ${yen(info.over)} 超えています。超えている間は保存できません。</span>`;
+    btn.disabled=true;btn.style.opacity='.45';btn.style.cursor='not-allowed';
+  }else{
+    box.innerHTML=`<span>あと <b>${yen(info.maxVariable-info.totalVariable)}</b> まで予算を増やせるよ🩷</span>`;
+    btn.disabled=false;btn.style.opacity='';btn.style.cursor='';
+  }
+  return info;
+}
+function saveBudgets(){
+  const next=getBudgetDraft();
+  const info=budgetLimitInfo(next);
+  if(info.over>0){
+    validateBudgetDraft();
+    alert(`保存できないよ🥹\n\n変動費の予算上限：${yen(info.maxVariable)}\n今回の合計：${yen(info.totalVariable)}\n超過：${yen(info.over)}\n\n他のカテゴリを減らして、合計を上限以内にしてね🩷`);
+    return;
+  }
+  budgets=next; queuePersist(); render(); renderSettings(); alert(`予算を更新したよ🥰\n変動費予算合計：${yen(info.totalVariable)}\n残りの予算枠：${yen(info.maxVariable-info.totalVariable)}`)
+}
 function saveUtilityBudgets(){document.querySelectorAll('[data-util-budget]').forEach(i=>{utilBudgets[i.dataset.utilBudget]=Math.max(0,Number(i.value)||0)});queuePersist();render();alert('光熱費の予算を更新したよ🥰')}
 function openCardEditor(name=''){document.getElementById('cardModal').classList.add('open');document.getElementById('cardName').value=name;document.getElementById('cardClose').value=name&&cards[name]?cards[name].close:'';document.getElementById('cardPay').value=name&&cards[name]?cards[name].pay:'';document.getElementById('cardName').dataset.original=name}function closeCardEditor(){document.getElementById('cardModal').classList.remove('open')}function saveCard(){const name=document.getElementById('cardName').value.trim(),close=Number(document.getElementById('cardClose').value),pay=Number(document.getElementById('cardPay').value),original=document.getElementById('cardName').dataset.original;if(!name||!close||!pay||close<1||close>31||pay<1||pay>31){alert('カード名・締め日・支払日を入力してね🥹');return}if(original&&original!==name){cards[name]=cards[original];delete cards[original]}cards[name]={close,pay};queuePersist();closeCardEditor();render()}
 function editCard(encoded){openCardEditor(decodeURIComponent(encoded))}
